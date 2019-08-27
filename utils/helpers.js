@@ -157,3 +157,9 @@ export function getMetricMetaInfo (metric) {
     const todayUTC = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
     return todayUTC.toISOString().split('T')[0]
   }
+
+  export function getDailyRemindersValue () {
+      return {
+          today: "Don't forget to log your data today!"
+      }
+  }

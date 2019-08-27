@@ -1,20 +1,28 @@
 import React, { Component } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet} from 'react-native'
-import { getMetricMetaInfo, timeToString } from '../utils/helpers'
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native'
+import { getMetricMetaInfo, timeToString, getDailyRemindersValue } from '../utils/helpers'
 import UdaciStepper from './UdaciStepper'
 import UdaciSlider from './UdaciSlider'
 import DateHeader from './DateHeader'
 import { white, purple } from '../utils/colors'
+import { Ionicons } from '@expo/vector-icons'
+import TextButton from './TextButton'
+import { submitEntry, removeEntry } from '../utils/api'
+import { connect } from 'react-redux'
+import { addEntry } from '../actions/index'
+
 
 function SubmitBtn ({ onPress }) {
     return (
-        <TouchableOpacity onPress={onPress}>
-            <Text>SUBMIT</Text>
+        <TouchableOpacity 
+            style={Platform.OS === 'ios' ? styles.iosSubmitBtn : styles.AndroidSubmitBtn}    
+            onPress={onPress}>
+                <Text style={styles.submitBtnText}>SUBMIT</Text>
         </TouchableOpacity>
     )
 }
 
-export default class AddEntry extends Component {
+class AddEntry extends Component {
     state = {
         run: 0,
         bike: 0,
@@ -55,7 +63,11 @@ export default class AddEntry extends Component {
 
     submit = () => {
         const key = timeToString()
-        const entry = this.state
+        const entry = this.state  //entry is just local state
+
+        this.props.dispatch(addEntry({
+            [key]: entry
+        }))
 
         this.setState(() => ({
             run: 0,
@@ -64,13 +76,40 @@ export default class AddEntry extends Component {
             sleep: 0,
             eat: 0
         }))
+
+        submitEntry({ key, entry })
+    }
+
+    reset = () => {
+        const key = timeToString()  //timeToString provides a key
+
+        this.props.dispatch(addEntry({
+            [key]: getDailyRemindersValue()
+        }))
+
+        removeEntry(key)
     }
 
     render() {
         const metaInfo = getMetricMetaInfo()
 
+        if (this.props.alreadyLogged) {
+            return (
+                <View style={styles.center}>
+                    <Ionicons 
+                        name={Platform.OS === "ios" ? "ios-happy-outline" : "md-happy"}
+                        size={100}
+                    />
+                    <Text>You already logged your information for today</Text>
+                    <TextButton style={{ padding: 10 }} onPress={this.reset}>
+                        Reset
+                    </TextButton>
+                </View>
+            )
+        }
+
         return (
-            <View>
+            <View style={styles.container}>
                 <DateHeader date={(new Date()).toLocaleDateString()} />
 
                 {Object.keys(metaInfo).map((key) => {
@@ -78,7 +117,7 @@ export default class AddEntry extends Component {
                     const value = this.state[key]
 
                     return (
-                        <View key={key}>
+                        <View key={key} style={styles.row}>
                             {getIcon()}
                             {type === 'slider'
                             ? <UdaciSlider 
@@ -104,7 +143,7 @@ export default class AddEntry extends Component {
 
 const styles = StyleSheet.create({
     container: {
-      flex: 1,
+      flex: 1,  //means children will take up all available space
       padding: 20,
       backgroundColor: white
     },
@@ -146,5 +185,13 @@ const styles = StyleSheet.create({
     }
   });
   
+function mapStateToProps (state) {
+    const key = timeToString()
 
+    return {
+        alreadyLogged: state[key] && typeof state[key].today === 'undefined'
+    } //if key for today is a thing they havent logged their info
+}
+
+export default connect(mapStateToProps)(AddEntry)  //once connected this component has access to dispatch
   
