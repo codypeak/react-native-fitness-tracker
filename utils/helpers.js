@@ -158,7 +158,7 @@ export function getMetricMetaInfo (metric) {
     return todayUTC.toISOString().split('T')[0]
   }
 
-  export function getDailyRemindersValue () {
+  export function getDailyReminderValue () {
       return {
           today: "Don't forget to log your data today!"
       }

@@ -1,5 +1,12 @@
 import { AsyncStorage } from 'react-native'
-import { CALENDAR_STORAGE_KEY } from './_calendar'
+import { CALENDAR_STORAGE_KEY, formatCalendarResults } from './_calendar'
+
+//asyncstorage fake little db. getting calendar data.
+export function fetchCalendarResults () {
+    return AsyncStorage.getItem(CALENDAR_STORAGE_KEY)
+        .then(formatCalendarResults)
+}
+
 
 //to make entry into local async storage on phone and merge it into existing storage
 export function submitEntry ({ entry, key }) {
