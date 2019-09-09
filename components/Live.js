@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { View, Text, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, ActivityIndicator, TouchableOpacity, StyleSheet, Animated } from 'react-native'
 import { Foundation } from '@expo/vector-icons'
 import { purple, white } from '../utils/colors'
 import { calculateDirection } from '../utils/helpers'
@@ -10,7 +10,8 @@ export default class Live extends Component {
     state = {
         coords: {lat: 43.4799, long: 110.7624},
         status: null,
-        direction: ''
+        direction: '',
+        bounceValue: new Animated.Value(1),
     }
     //need to make sure have correct permissions
     componentDidMount () {
@@ -46,7 +47,14 @@ export default class Live extends Component {
             distanceInterval: 1,
         }, ({ coords }) => {  //then pass callback func as 2nd arg, so whenever phones position changes will be passed new coords
             const newDirection = calculateDirection(coords.heading)
-            const { direction } = this.state
+            const { direction, bounceValue } = this.state
+            //when direction changes call animation. always need start with animation.
+            if (newDirection !== direction) {
+              Animated.sequence([
+                Animated.timing(bounceValue, { duration: 200, toValue: 1.04 }),
+                Animated.spring(bounceValue, { toValue: 1, friction: 4 })
+              ]).start()
+            }
 
             this.setState(() => ({
                 coords,
@@ -57,7 +65,7 @@ export default class Live extends Component {
     }
 
     render() {
-        const { coords, status, direction } = this.state
+        const { coords, status, direction, bounceValue } = this.state
 
         if (status === null) {
             return <ActivityIndicator style={{marginTop: 30}}/>  //renders spinner
@@ -93,10 +101,11 @@ export default class Live extends Component {
         return (
             <View style={styles.container}>
             <View style={styles.directionContainer}>
-              <Text style={styles.header}>Youre heading</Text>
-                <Text style={styles.direction}>
+              <Text style={styles.header}>You're heading</Text>
+                <Animated.Text 
+                  style={styles.direction, {transform: [{scale: bounceValue}]}}> 
                   {direction}
-                </Text>
+                </Animated.Text>
             </View>
             <View style={styles.metricContainer}>
               <View style={styles.metric}>

@@ -13,6 +13,7 @@ import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants'
 import EntryDetail from './components/EntryDetail';
 import Live from './components/Live'
+import { setLocationNotification } from './utils/helpers'
 
 function UdaciStatusBar ({ backgroundColor, ...props}) {
   return (
@@ -116,6 +117,9 @@ const MainNavigator = createAppContainer(createStackNavigator({
 })) 
 
 export default class App extends React.Component {
+  componentDidMount () {
+    setLocationNotification()  //dont need to return just call
+  }
   render() {
     return (  //adding redux, wrap app with provider, passing it store and reducer function
       <Provider store={createStore(reducer)}> 

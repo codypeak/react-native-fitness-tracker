@@ -1,9 +1,12 @@
 // utils/helpers.js
 import React from 'react'
-import { View, StyleSheet } from 'react-native'
+import { View, StyleSheet, AsyncStorage } from 'react-native'
 import { FontAwesome, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { red, orange, blue, lightPurp, pink, white } from './colors'
+import { Notifications } from 'expo'
+import * as Permissions from 'expo-permissions';
 
+const NOTIFICATION_KEY = 'UdaciFitness:notifications'
 
 const styles = StyleSheet.create({
     iconContainer: {
@@ -162,4 +165,54 @@ export function getMetricMetaInfo (metric) {
       return {
           today: "Don't forget to log your data today!"
       }
+  }
+
+  export function clearLocalNotification() {
+    return AsyncStorage.removeItem(NOTIFICATION_KEY)
+      .then(Notifications.cancelAllScheduledNotificationsAsync)
+  }
+
+  function createNotification () {
+    return {
+      title: 'Log your stats!',
+      body: "Don't forget to log your stats for today!",
+      ios: {
+        sound: true,
+      },
+      android: {
+        sound: true,
+        priority: 'high',
+        sticky: false,
+        vibrate: true,
+      }
+    }
+  }
+
+  export function setLocalNofication () {
+    AsyncStorage.getItem(NOTIFICATION_KEY) //check to see if notification already set so dont get repetitive notifications
+      .then(JSON.parse)
+      .then((data) => {
+        if (data === null) {
+          Permissions.askAsync(Permissions.NOTIFICATIONS)
+            .then(({ status }) => {
+              if (status === 'granted') {
+                Notifications.cancelAllScheduledNotificationsAsync()  //cancel if notifications already set 
+
+                let tomorrow = new Date()  //create date object to notify every day at 8pm
+                tomorrow.setDate(tomorrow.getDate() +1)
+                tomorrow.setHours(20)
+                tomorrow.setMinutes(0)
+
+                Notifications.scheduleLocalNotificationAsync(
+                  createNotification(),  //create new notification
+                  {
+                    time: tomorrow,
+                    repeat: 'day'
+                  }
+                )
+                AsyncStorage.setItem(NOTIFICATION_KEY, JSON.stringify(true))  // set notification to local storage
+              }
+            })
+        }
+      })
   }
